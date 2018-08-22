@@ -1,0 +1,8 @@
+# Compiled files
+*.tfstate
+*.tfstate.backup
+.idea/
+
+.terraform/
+plan.tfplan
+wordpress/

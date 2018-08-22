@@ -1,0 +1,70 @@
+---
+
+- hosts: all
+  handlers:
+    - name: reload apache
+      service:
+        name: httpd
+        state: reloaded
+      listen: "reload web services"
+
+  tasks:
+   - name: Install stuff
+     yum:
+       name: "{{ packages }}"
+     vars:
+       packages:
+       - httpd
+       - php
+       - php-mysql
+       - MySQL-python
+       - mariadb-server
+
+   - name: mariadb service state
+     service:
+       name: mariadb
+       state: started
+       enabled: yes
+
+   - name: http service state
+     service:
+      name: httpd
+      state: started
+      enabled: yes
+
+   - name: create wordpress database
+     mysql_db:
+       name: ggwordpressdb
+       state: present
+
+   - name: create wordpress db user
+     mysql_user:
+       name: wordpress
+       password: 'password_here'
+       priv: "ggwordpressdb.*:ALL"
+       state: present
+
+   - name: download and extract wordpress
+     unarchive:
+       remote_src: yes
+       src: https://wordpress.org/wordpress-4.9.8.tar.gz
+       dest: /var/www/html/
+       extra_opts: --strip-components=1
+
+   - name: upload apache wordpress config file
+     copy:
+       src: wordpress.conf
+       dest: /etc/httpd/conf.d/wordpress.conf
+       owner: root
+       group: root
+       mode: 0644
+     notify:
+       - reload apache
+
+   - name: upload wordpress config filter
+     copy:
+      src: wp-config.php
+      dest: /var/www/html/wp-config.php
+      owner: nobody
+      group: nfsnobody
+      mode: 0644
